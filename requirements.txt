@@ -1,5 +1,4 @@
 geographiclib==1.50
-geopy==1.21.0
 numpy==1.18.2
 pandas==1.0.3
 python-dateutil==2.8.1
