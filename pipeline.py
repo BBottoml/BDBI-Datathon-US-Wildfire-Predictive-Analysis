@@ -1,13 +1,16 @@
 from __future__ import print_function
 from uszipcode import SearchEngine
 import json
+import pandas
 
 
 def get_data_from_lat_long(latlong: tuple):
     """Return data pertaining to the specified latitude and longitude"""
     search = SearchEngine(simple_zipcode=False)
     result = search.by_coordinates(latlong[0], latlong[1], radius=30, returns=1)
-    return result
+    return result.to_dict()
+
+# Data gathering functions 
 
 def get_population_density(raw_data: dict):
     """Return the population density for a given region"""
@@ -29,17 +32,34 @@ def get_number_occupied_housing_units(raw_data: dict):
     """Return the number of occupied housing units"""
     return raw_data["occupied_housing_units"]
 
-def get_majoriy_house_age(raw_data: dict):
-    """Return the year in which the majority of houses were built"""
-    house_ages = raw_data["year_housing_was_built"][0]["values"]
-    years = {1930: 0, 1940: 0, 1950: 0, 1960: 0, 1970: 0, 1980: 0, 1990: 0, 2000: 0, 2010: 0} 
+def get_house_age_breakdown(raw_data: dict):
+    """Return a dictionary representing decades in which houses were built"""
+    ages_raw = raw_data["year_housing_was_built"][0]["values"]
+    ages = {1930: 0, 1940: 0, 1950: 0, 1960: 0, 1970: 0, 1980: 0, 1990: 0, 2000: 0, 2010: 0} 
 
-    i = 0
-    for key in years.keys():
-        years[key] = house_ages[i]["y"]
-        i += 1
+    return transform_dict(ages_raw, ages)
+
+def get_degree_breakdown(raw_data: dict):
+    """Return a dictionary representing the number of degree holders"""
+    degree_raw = raw_data["educational_attainment_for_population_25_and_over"][0]["values"]
+    degrees = {"NO_HS": 0, "HS": 0, "Associates": 0, "Bachelors": 0, "Masters": 0, "Professional": 0, "Doctorate": 0} 
+
+    return transform_dict(degree_raw, degrees)
+
+def get_earnings_breakdown(raw_data: dict):
+    """Return a dictionary representing earnings breakdown"""
+    earnings_raw = raw_data["source_of_earnings"][0]["values"]
+    earnings = {"None": 0, "Part_Time": 0, "Full_Time": 0} 
     
-    return get_majority_value(years)
+    return transform_dict(earnings_raw, earnings)
+
+'''
+def get_household_breakdown(raw_data: dict):
+    """Return a dictionary representing household breakdown"""
+    household_raw = raw_data["households_with_kids"][0]["values"]
+'''
+
+# Helper functions
 
 def get_majority_value(data_dict: dict):
     max_val = -1
@@ -50,14 +70,32 @@ def get_majority_value(data_dict: dict):
             majority = key
 
     return majority
+
+def transform_dict(raw_dict, new_dict):
+    i = 0
+    for key in new_dict.keys():
+        new_dict[key] = raw_dict[i]["y"]
+        i += 1
     
+    return new_dict
+
 
 if __name__ == "__main__":
     #raw_data = (get_data_from_lat_long((33.3062856, -111.8673082))[0]).to_dict()
-   
+    
+    '''
+    latlongs = {}  # map lat long tuple to raw data dictionary 
+    latlong_severity = {} # map lat long tuple to 0-1 ranking 
+
+    data = pandas.read_csv("MODIS_C6_USA_contiguous_and_Hawaii_7d.csv")
+    
+    print(data)
+    data['latlongtuple'] = list(zip(data.latitude, data.longitude))
+    '''
+
     #with open('sample_data.json', 'w', encoding='utf-8') as f:
     #    json.dump(raw_data, f, ensure_ascii=False, indent=4)
     with open("sample_data.json", "r") as read_file:
         data = json.load(read_file)
     
-    print(get_majoriy_house_age(data))
+    print(get_earnings_breakdown(data))
