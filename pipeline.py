@@ -3,6 +3,7 @@ from uszipcode import SearchEngine
 import pandas
 import json
 import requests
+import operator
 import csv
 
 
@@ -10,7 +11,7 @@ def get_data_from_lat_long(latlong: tuple):
     """Return data pertaining to the specified latitude and longitude"""
     search = SearchEngine(simple_zipcode=False)
     result = search.by_coordinates(latlong[0], latlong[1], radius=30, returns=1)
-    if result != []:
+    if result != [] and result != None:
         return result[0].to_dict()
 
 # Data gathering functions 
@@ -56,12 +57,6 @@ def get_earnings_breakdown(raw_data: dict):
     
     return transform_dict(earnings_raw, earnings)
 
-'''
-def get_household_breakdown(raw_data: dict):
-    """Return a dictionary representing household breakdown"""
-    household_raw = raw_data["households_with_kids"][0]["values"]
-'''
-
 # Helper functions
 
 def get_majority_value(data_dict: dict):
@@ -82,6 +77,18 @@ def transform_dict(raw_dict, new_dict):
     
     return new_dict
 
+def determine_severity(raw_data: dict):
+    """Return a severity score based on model between 0.00-1.00"""
+    try:
+        median_household_income = get_median_household_income(raw_data)
+        median_home_value = get_median_home_value(raw_data)
+        population_density = get_population_density(raw_data)
+        number_housing_units = get_number_housing_units(raw_data)
+    except: 
+        return -1
+
+
+    return 0.00
 
 if __name__ == "__main__":
     #raw_data = (get_data_from_lat_long((33.3062856, -111.8673082))[0]).to_dict()
@@ -90,7 +97,6 @@ if __name__ == "__main__":
     print("="*50)
     print("Gathering data...")
     
-
     latlongs = {}  # map lat long tuple to raw data dictionary 
     latlong_severity = {} # map lat long tuple to score determined by model
 
@@ -108,6 +114,7 @@ if __name__ == "__main__":
     
     # acquire data for each potential wildfire 
     data['latlongtuple'] = list(zip(data.latitude, data.longitude, data.confidence))
+    i = 0
     for item in data['latlongtuple']:
         if (item[2] > 95): # determine if confidence is greater than 95 
             latlongs[item] = get_data_from_lat_long((item[0], item[1]))
@@ -120,9 +127,13 @@ if __name__ == "__main__":
     
     # Create model and determine severity for each potential wildfire 
     for key,value in latlongs.items():
-        latlong_severity[key] = determine_severity(value)
-    
+        severity_score = determine_severity(value)
+        if severity_score != -1:
+            latlong_severity[key] = determine_severity(value)
+
     # Sort by most severe and display
+    latlong_severity = sorted(latlong_severity.items(), key=operator.itemgetter(1), reverse=True)
+    print(len(latlong_severity))
     '''
     #with open('sample_data.json', 'w', encoding='utf-8') as f:
     #    json.dump(raw_data, f, ensure_ascii=False, indent=4)
@@ -131,7 +142,3 @@ if __name__ == "__main__":
     
     print(get_earnings_breakdown(data))
     '''
-
-def determine_severity(raw_data: dict):
-    """Return a severity score based on model between 0.00-1.00"""
-    pass
