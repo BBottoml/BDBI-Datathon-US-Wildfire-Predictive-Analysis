@@ -1,6 +1,6 @@
 from __future__ import print_function
 from uszipcode import SearchEngine
-import pandas
+import pandas as pd 
 import json
 import requests
 import operator
@@ -77,18 +77,41 @@ def transform_dict(raw_dict, new_dict):
     
     return new_dict
 
-def determine_severity(raw_data: dict):
+def verify_data(raw_data: dict):
     """Return a severity score based on model between 0.00-1.00"""
     try:
-        median_household_income = get_median_household_income(raw_data)
-        median_home_value = get_median_home_value(raw_data)
-        population_density = get_population_density(raw_data)
-        number_housing_units = get_number_housing_units(raw_data)
+        get_median_household_income(raw_data)
+        get_median_home_value(raw_data)
+        get_population_density(raw_data)
+        get_number_housing_units(raw_data)
     except: 
         return -1
 
 
-    return 0.00
+    return 0
+
+def construct_dataframe(latlong_list: list):
+    raw_data_col = [] 
+    income_col = [] 
+    home_val_col = []
+    pop_density_col = [] 
+    housing_num_unit_col = [] 
+
+    for latlong in latlong_list:
+        raw_data_col.append(latlong)
+        income_col.append(get_median_household_income(latlong))
+        home_val_col.append(get_median_home_value(latlong))
+        pop_density_col.append(get_population_density(latlong))
+        housing_num_unit_col.append(get_population_density(latlong))
+    
+    d = {'raw_data': raw_data_col, 'median_household_income': income_col, 'median_home_value': home_val_col, 'population_density': pop_density_col, 'number_housing_units': housing_num_unit_col}
+    return pd.DataFrame(data=d)
+
+
+# temporary name 
+def model_algorithm():
+    pass
+
 
 if __name__ == "__main__":
     #raw_data = (get_data_from_lat_long((33.3062856, -111.8673082))[0]).to_dict()
@@ -98,6 +121,23 @@ if __name__ == "__main__":
     print("Gathering data...")
     
     latlongs = {}  # map lat long tuple to raw data dictionary 
+    '''
+    0 key: (lat, long, confidence) -> value: {DICT} 
+    1   
+    2
+    3
+    4
+    5
+    6
+    7
+    ...
+    N 
+    '''
+
+    ''' 
+    Row: (lat, long, confidence): get_median_household_income(raw_data), get_median_home_value(raw_data)
+    '''
+
     latlong_severity = {} # map lat long tuple to score determined by model
 
     # GET request to NASA active fire data source
@@ -110,13 +150,13 @@ if __name__ == "__main__":
         for line in req.iter_lines():
             writer.writerow(line.decode('utf-8').split(','))
     
-    data = pandas.read_csv('current_data.csv')
+    data = pd.read_csv('current_data.csv')
     
     # acquire data for each potential wildfire 
     data['latlongtuple'] = list(zip(data.latitude, data.longitude, data.confidence))
     i = 0
     for item in data['latlongtuple']:
-        if (item[2] > 95): # determine if confidence is greater than 95 
+        if (item[2] > 90): # determine if confidence is greater than 95 
             latlongs[item] = get_data_from_lat_long((item[0], item[1]))
             i+=1
     
@@ -124,16 +164,25 @@ if __name__ == "__main__":
     print("Done gathering data...")
     print(i, "potential wildfires identified")
     
-    
-    # Create model and determine severity for each potential wildfire 
+    # verify each of the potential wildfires
+    latlong_list = []
+    suitable = 0
     for key,value in latlongs.items():
-        severity_score = determine_severity(value)
-        if severity_score != -1:
-            latlong_severity[key] = determine_severity(value)
+        if verify_data(value) != -1:
+            latlong_list.append(value)
+    print(suitable, "wildfires suitable for analysis")
+    print("="*50)
 
+    #print(len(latlong_list))
+    df = construct_dataframe(latlong_list)
+    print(df) 
+
+    # TODO: Call model_algorithm on the data frame, df 
+
+    # Create model and determine severity for each potential wildfire 
     # Sort by most severe and display
-    latlong_severity = sorted(latlong_severity.items(), key=operator.itemgetter(1), reverse=True)
-    print(len(latlong_severity))
+    #latlong_severity = sorted(latlong_severity.items(), key=operator.itemgetter(1), reverse=True)
+    #print(len(latlong_severity))
     '''
     #with open('sample_data.json', 'w', encoding='utf-8') as f:
     #    json.dump(raw_data, f, ensure_ascii=False, indent=4)
