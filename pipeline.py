@@ -92,9 +92,9 @@ if __name__ == "__main__":
     
 
     latlongs = {}  # map lat long tuple to raw data dictionary 
-    latlong_severity = {} # map lat long tuple to 0-1 ranking 
+    latlong_severity = {} # map lat long tuple to score determined by model
 
-    # get the latest data from NASA
+    # GET request to NASA active fire data source
     req = requests.get(r'https://firms.modaps.eosdis.nasa.gov/data/active_fire/c6/csv/MODIS_C6_USA_contiguous_and_Hawaii_7d.csv')
     if req.status_code != 200:
         exit(1)
@@ -106,9 +106,8 @@ if __name__ == "__main__":
     
     data = pandas.read_csv('current_data.csv')
     
-    #print(data)
+    # acquire data for each potential wildfire 
     data['latlongtuple'] = list(zip(data.latitude, data.longitude, data.confidence))
-    i = 0 
     for item in data['latlongtuple']:
         if (item[2] > 95): # determine if confidence is greater than 95 
             latlongs[item] = get_data_from_lat_long((item[0], item[1]))
