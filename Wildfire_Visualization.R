@@ -18,6 +18,8 @@ ca_fires <- ca_fires %>%  mutate(duration = end - start)
 
 ca_fires <- ca_fires %>%  mutate(acres_cumulative = cumsum(acres))
 
+group_by(ca_fires$Year,ca_fires$acres, sum)
+
 library(ggplot2)
 
 ggplot(data = ca_fires) +
@@ -70,3 +72,5 @@ ca_fires %>%
   ylab("Acres Burned (cumulative)") +
   xlab("date") +
   ggtitle("Cumulative Acres Burned Since 2000")
+
+ca_fires
