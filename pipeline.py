@@ -8,7 +8,9 @@ def get_data_from_lat_long(latlong: tuple):
     """Return data pertaining to the specified latitude and longitude"""
     search = SearchEngine(simple_zipcode=False)
     result = search.by_coordinates(latlong[0], latlong[1], radius=30, returns=1)
-    return result.to_dict()
+    if result != []:
+        print(result)
+        return result[0].to_dict()
 
 # Data gathering functions 
 
@@ -82,20 +84,33 @@ def transform_dict(raw_dict, new_dict):
 
 if __name__ == "__main__":
     #raw_data = (get_data_from_lat_long((33.3062856, -111.8673082))[0]).to_dict()
+    print("="*50)
+    print("Wildfire Pipeline Predictive Analysis Program")
+    print("="*50)
     
-    '''
+
     latlongs = {}  # map lat long tuple to raw data dictionary 
     latlong_severity = {} # map lat long tuple to 0-1 ranking 
 
     data = pandas.read_csv("MODIS_C6_USA_contiguous_and_Hawaii_7d.csv")
     
-    print(data)
-    data['latlongtuple'] = list(zip(data.latitude, data.longitude))
+    #print(data)
+    data['latlongtuple'] = list(zip(data.latitude, data.longitude, data.confidence))
+    i = 0 
+    for item in data['latlongtuple']:
+        if (item[2] > 95):
+            latlongs[item] = get_data_from_lat_long((item[0], item[1]))
+            i+=1
+    
+    print("="*50)
+    print("Done gathering data...")
+    print(i, "potential wildfires identified")
+    
     '''
-
     #with open('sample_data.json', 'w', encoding='utf-8') as f:
     #    json.dump(raw_data, f, ensure_ascii=False, indent=4)
     with open("sample_data.json", "r") as read_file:
         data = json.load(read_file)
     
     print(get_earnings_breakdown(data))
+    '''
