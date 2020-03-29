@@ -78,7 +78,7 @@ def transform_dict(raw_dict, new_dict):
     return new_dict
 
 def verify_data(raw_data: dict):
-    """Return a severity score based on model between 0.00-1.00"""
+    """Will verify that raw_data is populated with the necessary fields to perform analysis"""
     try:
         get_median_household_income(raw_data)
         get_median_home_value(raw_data)
