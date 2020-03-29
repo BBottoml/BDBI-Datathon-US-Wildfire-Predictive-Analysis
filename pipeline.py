@@ -109,7 +109,7 @@ def construct_dataframe(latlong_list: list):
 
 
 # temporary name 
-def model_algorithm():
+def model_algorithm(data_frame):
     pass
 
 
@@ -170,6 +170,7 @@ if __name__ == "__main__":
     for key,value in latlongs.items():
         if verify_data(value) != -1:
             latlong_list.append(value)
+            suitable+=1
     print(suitable, "wildfires suitable for analysis")
     print("="*50)
 
@@ -178,6 +179,7 @@ if __name__ == "__main__":
     print(df) 
 
     # TODO: Call model_algorithm on the data frame, df 
+    # model_algorithm(df)
 
     # Create model and determine severity for each potential wildfire 
     # Sort by most severe and display
