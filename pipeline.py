@@ -1,7 +1,9 @@
 from __future__ import print_function
 from uszipcode import SearchEngine
-import json
 import pandas
+import json
+import requests
+import csv
 
 
 def get_data_from_lat_long(latlong: tuple):
@@ -9,7 +11,6 @@ def get_data_from_lat_long(latlong: tuple):
     search = SearchEngine(simple_zipcode=False)
     result = search.by_coordinates(latlong[0], latlong[1], radius=30, returns=1)
     if result != []:
-        print(result)
         return result[0].to_dict()
 
 # Data gathering functions 
@@ -87,18 +88,29 @@ if __name__ == "__main__":
     print("="*50)
     print("Wildfire Pipeline Predictive Analysis Program")
     print("="*50)
+    print("Gathering data...")
     
 
     latlongs = {}  # map lat long tuple to raw data dictionary 
     latlong_severity = {} # map lat long tuple to 0-1 ranking 
 
-    data = pandas.read_csv("MODIS_C6_USA_contiguous_and_Hawaii_7d.csv")
+    # get the latest data from NASA
+    req = requests.get(r'https://firms.modaps.eosdis.nasa.gov/data/active_fire/c6/csv/MODIS_C6_USA_contiguous_and_Hawaii_7d.csv')
+    if req.status_code != 200:
+        exit(1)
+
+    with open('current_data.csv', 'w') as f:
+        writer = csv.writer(f)
+        for line in req.iter_lines():
+            writer.writerow(line.decode('utf-8').split(','))
+    
+    data = pandas.read_csv('current_data.csv')
     
     #print(data)
     data['latlongtuple'] = list(zip(data.latitude, data.longitude, data.confidence))
     i = 0 
     for item in data['latlongtuple']:
-        if (item[2] > 95):
+        if (item[2] > 95): # determine if confidence is greater than 95 
             latlongs[item] = get_data_from_lat_long((item[0], item[1]))
             i+=1
     
