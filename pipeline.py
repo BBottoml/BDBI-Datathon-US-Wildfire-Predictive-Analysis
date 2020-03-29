@@ -106,6 +106,12 @@ if __name__ == "__main__":
     print("Done gathering data...")
     print(i, "potential wildfires identified")
     
+    
+    # Create model and determine severity for each potential wildfire 
+    for key,value in latlongs.items():
+        latlong_severity[key] = determine_severity(value)
+    
+    # Sort by most severe and display
     '''
     #with open('sample_data.json', 'w', encoding='utf-8') as f:
     #    json.dump(raw_data, f, ensure_ascii=False, indent=4)
@@ -114,3 +120,7 @@ if __name__ == "__main__":
     
     print(get_earnings_breakdown(data))
     '''
+
+def determine_severity(raw_data: dict):
+    """Return a severity score based on model between 0.00-1.00"""
+    pass
