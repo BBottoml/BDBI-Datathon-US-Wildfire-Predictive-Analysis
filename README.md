@@ -15,3 +15,6 @@ pipeline.py is our answer to the problem. When the program is ran, it makes a ge
 ![Image of Severity Score vs. Median Household Income](https://raw.githubusercontent.com/BBottoml/BDBI-Datathon-US-Wildfire-Predictive-Analysis/master/sev_score_vs._median_household_income.PNG)
 
 Ultimately, what we found was that in the most vulnerable locations for wildfires, the median household income is low as you can see in the plot above. This means that the places getting hurt the most are low-income, rural areas where the agriculture industry is most affected. Our findings show that in order to prevent these rural wildfires, more financial resources need to be added so that the agriculture industry does not crumble.
+
+## Complete Presentation
+View our complete presentation [here](https://docs.google.com/presentation/d/1jF-VbzMAlVYQEc_hYhQ3EaZn2OGWisH6i93anI_tTao/edit?usp=sharing)
