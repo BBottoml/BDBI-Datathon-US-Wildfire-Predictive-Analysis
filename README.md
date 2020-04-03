@@ -8,5 +8,5 @@ Wildfires pose significant disruption to daily life for those in affected areas.
 Minimize disruption to industry and areas of high population density by preemptively monitoring high risk areas by leveraging predictive analytics. 
 To preemptively monitor, we retrieve dynamic, current data from NASA that speculates where wildfires may occur. Based on user refinement, our model looks at a given region and predicts the highest risk regions to inform first responders. Our solution emphasizes the use of dynamic data, low cost initiatives and accounts for economic activity to avoid industry/supply chain disruption. 
 
-## Pipeline.py
-Pipeline.py is our answer to the problem. When run, the program makes an REST Get request to the NASA Active Fire data source to retrieve current information about potential wildfires. From there, we identify wildfires that are suitable for analysis and then proceed to retrieve data about the area based on latitude and longitude. Using our model, we output a CSV file sorted by the most severe locations. 
+## pipeline.py
+pipeline.py is our answer to the problem. When run, the program makes an REST Get request to the NASA Active Fire data source to retrieve current information about potential wildfires. From there, we identify wildfires that are suitable for analysis and then proceed to retrieve data about the area based on latitude and longitude. Using our model, we output a CSV file sorted by the most vulnerable locations. We envision first responders and the necessary agencies using this information to allocate resources. 
