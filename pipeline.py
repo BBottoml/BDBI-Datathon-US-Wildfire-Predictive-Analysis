@@ -5,7 +5,7 @@ import json
 import requests
 import operator
 import csv
-
+import statistics
 
 def get_data_from_lat_long(latlong: tuple):
     """Return data pertaining to the specified latitude and longitude"""
@@ -59,16 +59,6 @@ def get_earnings_breakdown(raw_data: dict):
 
 # Helper functions
 
-def get_majority_value(data_dict: dict):
-    max_val = -1
-    majority = None
-    for key, value in data_dict.items():
-        if value > max_val:
-            max_val = value 
-            majority = key
-
-    return majority
-
 def transform_dict(raw_dict, new_dict):
     i = 0
     for key in new_dict.keys():
@@ -91,6 +81,7 @@ def verify_data(raw_data: dict):
     return 0
 
 def construct_dataframe(latlong_list: list):
+    """Constructs a dataframe with the columns populated with certain attributes"""
     raw_data_col = [] 
     income_col = [] 
     home_val_col = []
@@ -107,11 +98,40 @@ def construct_dataframe(latlong_list: list):
     d = {'raw_data': raw_data_col, 'median_household_income': income_col, 'median_home_value': home_val_col, 'population_density': pop_density_col, 'number_housing_units': housing_num_unit_col}
     return pd.DataFrame(data=d)
 
-
 # temporary name 
 def model_algorithm(data_frame):
-    pass
+    """Returns a dataframe with a new column of severity scores"""
+    
+    normalized = []
+    for i in range(len(data_frame)): # iterate through the rows 
+        
+        # weights
+        # population density: 0.5
+        # median home value: 0.2
+        # housing units: 0.2
+        # income: 0.10
 
+        count = (0.10)*data_frame.loc[i, "median_household_income"] + (0.20)*data_frame.loc[i, "median_home_value"] 
+        + (0.50)*data_frame.loc[i, "population_density"] + (0.20)*data_frame.loc[i, "number_housing_units"]
+
+        normalized.append(count)
+    
+    normalized = pd.Series(normalized).fillna(-1).tolist()
+       
+    normalized_cpy = [element for element in normalized if element != -1] # filter out the nan values
+
+    mean = statistics.mean(normalized_cpy)
+    st_dev = statistics.stdev(normalized_cpy)
+
+    for i in range(len(normalized)):
+        if (normalized[i] != -1):
+            normalized[i] = (normalized[i] - mean)/st_dev # 3.21 
+        else:
+            normalized[i] = -10000 # 28193
+
+    data_frame["normalized_severity_score"] = normalized # length of normalized < num rows of data_frame 
+
+    return data_frame
 
 if __name__ == "__main__":
     #raw_data = (get_data_from_lat_long((33.3062856, -111.8673082))[0]).to_dict()
@@ -121,22 +141,6 @@ if __name__ == "__main__":
     print("Gathering data...")
     
     latlongs = {}  # map lat long tuple to raw data dictionary 
-    '''
-    0 key: (lat, long, confidence) -> value: {DICT} 
-    1   
-    2
-    3
-    4
-    5
-    6
-    7
-    ...
-    N 
-    '''
-
-    ''' 
-    Row: (lat, long, confidence): get_median_household_income(raw_data), get_median_home_value(raw_data)
-    '''
 
     latlong_severity = {} # map lat long tuple to score determined by model
 
@@ -159,7 +163,7 @@ if __name__ == "__main__":
         if (item[2] > 90): # determine if confidence is greater than 95 
             latlongs[item] = get_data_from_lat_long((item[0], item[1]))
             i+=1
-    
+
     print("="*50)
     print("Done gathering data...")
     print(i, "potential wildfires identified")
@@ -176,20 +180,23 @@ if __name__ == "__main__":
 
     #print(len(latlong_list))
     df = construct_dataframe(latlong_list)
-    print(df) 
 
     # TODO: Call model_algorithm on the data frame, df 
-    # model_algorithm(df)
-
     # Create model and determine severity for each potential wildfire 
-    # Sort by most severe and display
-    #latlong_severity = sorted(latlong_severity.items(), key=operator.itemgetter(1), reverse=True)
-    #print(len(latlong_severity))
-    '''
-    #with open('sample_data.json', 'w', encoding='utf-8') as f:
-    #    json.dump(raw_data, f, ensure_ascii=False, indent=4)
-    with open("sample_data.json", "r") as read_file:
-        data = json.load(read_file)
+    df = model_algorithm(df)
     
-    print(get_earnings_breakdown(data))
-    '''
+    # Sort by most severe and display
+    df = df.sort_values('normalized_severity_score', ascending=False)
+
+    # print out the final data frame
+    print("="*50)
+    print("Final Dataframe: ")
+    print(df)
+    print("="*50)
+
+    df.to_csv('Current_Wildfire_Severity.csv')
+    
+    print("="*50)
+    print("CSV generated")
+    print("="*50)
+    #latlong_severity = sorted(latlong_severity.items(), key=operator.itemgetter(1), reverse=True)
