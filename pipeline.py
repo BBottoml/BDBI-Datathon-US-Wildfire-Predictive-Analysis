@@ -98,11 +98,25 @@ def construct_dataframe(latlong_list: list):
     d = {'raw_data': raw_data_col, 'median_household_income': income_col, 'median_home_value': home_val_col, 'population_density': pop_density_col, 'number_housing_units': housing_num_unit_col}
     return pd.DataFrame(data=d)
 
+def normalize(mean, stdev, value):
+    """Returns the normalized value given three params"""
+    return ((value - mean)/stdev)
+
 # temporary name 
 def model_algorithm(data_frame):
     """Returns a dataframe with a new column of severity scores"""
     
     normalized = []
+    mean_median_household_income = statistics.mean(data_frame["median_household_income"])
+    mean_median_home_value = statistics.mean(data_frame["median_home_value"])
+    mean_population_density = statistics.mean(data_frame["population_density"])
+    mean_num_housing_units = statistics.mean(data_frame["number_housing_units"])
+
+    stdev_median_household_income = statistics.stdev(data_frame["median_household_income"])
+    stdev_median_home_value = statistics.stdev(data_frame["median_home_value"])
+    stdev_population_density = statistics.stdev(data_frame["population_density"])
+    stdev_num_housing_units = statistics.stdev(data_frame["number_housing_units"])
+
     for i in range(len(data_frame)): # iterate through the rows 
         
         # weights
@@ -111,8 +125,10 @@ def model_algorithm(data_frame):
         # housing units: 0.2
         # income: 0.10
 
-        count = (0.10)*data_frame.loc[i, "median_household_income"] + (0.20)*data_frame.loc[i, "median_home_value"] 
-        + (0.50)*data_frame.loc[i, "population_density"] + (0.20)*data_frame.loc[i, "number_housing_units"]
+        count = (0.10)*normalize(data_frame.loc[i, "median_household_income"],stdev_median_household_income, mean_median_household_income)
+        + (0.20)*normalize(data_frame.loc[i, "median_home_value"], stdev_median_home_value, mean_median_home_value)
+        + (0.50)*normalize(data_frame.loc[i, "population_density"], stdev_population_density, mean_population_density)
+        + (0.20)*normalize(data_frame.loc[i, "number_housing_units"], stdev_num_housing_units, mean_num_housing_units)
 
         normalized.append(count)
     
@@ -125,9 +141,9 @@ def model_algorithm(data_frame):
 
     for i in range(len(normalized)):
         if (normalized[i] != -1):
-            normalized[i] = (normalized[i] - mean)/st_dev # 3.21 
+            normalized[i] = (normalized[i] - mean)/st_dev 
         else:
-            normalized[i] = -10000 # 28193
+            normalized[i] = -10000 
 
     data_frame["normalized_severity_score"] = normalized # length of normalized < num rows of data_frame 
 
@@ -195,8 +211,7 @@ if __name__ == "__main__":
     print("="*50)
 
     df.to_csv('Current_Wildfire_Severity.csv')
-    
-    print("="*50)
+
     print("CSV generated")
     print("="*50)
     #latlong_severity = sorted(latlong_severity.items(), key=operator.itemgetter(1), reverse=True)
