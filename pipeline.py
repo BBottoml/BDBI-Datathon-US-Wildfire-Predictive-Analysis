@@ -150,7 +150,6 @@ def model_algorithm(data_frame):
     return data_frame
 
 if __name__ == "__main__":
-    #raw_data = (get_data_from_lat_long((33.3062856, -111.8673082))[0]).to_dict()
     print("="*50)
     print("Wildfire Pipeline Predictive Analysis Program")
     print("="*50)
